@@ -10,6 +10,7 @@ import sys
 import shutil
 import pkg_resources
 
+__version__ = "1.0.0"
 
 RE_PACKAGE_NAME=re.compile(r"(?P<pkg>.*?)-(?P<rest>\d+.*)")
 
