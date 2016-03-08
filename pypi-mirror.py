@@ -8,16 +8,15 @@ import re
 import pip
 import sys
 import shutil
-import logging
 import pkg_resources
 
 
-logging.basicConfig(name=__name__, format='%(asctime)s [%(levelname)s] %(message)s')
+RE_PACKAGE_NAME=re.compile(r"(?P<pkg>.*?)-(?P<rest>\d+.*)")
 
 
 class PyPIMirror(object):
 
-    def __init__(self, packages_list, directory, pip_log_file=None):
+    def __init__(self, packages_list, directory, verbose=False, pip_log=None):
 
         if not packages_list or not os.path.exists(packages_list):
             raise RuntimeError('The packages list does not exists, %s' % packages_list)
@@ -25,9 +24,13 @@ class PyPIMirror(object):
         if not directory or not os.path.exists(directory):
             raise RuntimeError('The directory for packages does not exists, %s' % directory)
 
-        self._pip_log_file = None
-        if pip_log_file:
-            self._pip_log_file = pip_log_file
+        self._pip_log = None
+        if pip_log:
+            self._pip_log = pip_log
+
+        self._verbose = verbose
+        if not isinstance(verbose, bool):
+            self._verbose = False            
 
         self._packages = packages_list
         self._packages_dir = os.path.join(directory, 'packages/')
@@ -53,9 +56,12 @@ class PyPIMirror(object):
             for _package in _packages:
                 _package = _package.strip()
                 if _package:
-                    cmd = ['install', '-q', '--download', self._packages_dir]
-                    if self._pip_log_file:
-                        cmd.extend(['--log-file', self._pip_log_file])
+                    cmd = ['download',]
+                    if not self._verbose:
+                        cmd.append('-q')
+                    cmd.extend(["--dest", self._packages_dir])
+                    if self._pip_log:
+                        cmd.extend(['--log', self._pip_log])
                     cmd.append(_package.strip())
                     pip.main(cmd)
 
@@ -72,8 +78,6 @@ class PyPIMirror(object):
             if not os.path.isdir(full_pkg_path):
                 os.mkdir(full_pkg_path)
 
-            # print (_file, _package), os.path.join(self._index_dir, _package, _file), path
-            logging.info(_file)
             os.symlink(
                 os.path.join('../../packages/', _file), 
                 os.path.join(self._index_dir, _package, _file)
@@ -86,24 +90,11 @@ class PyPIMirror(object):
             """
 
         file = os.path.basename(file)
-        file_ext = os.path.splitext(file)[1].lower()
-
-        if file_ext == ".egg":
-            dist = pkg_resources.Distribution.from_location(None, file)
-            name = dist.project_name
-            split = (name, file[len(name)+1:])
-            to_safe_name = lambda x: x
-        
-        if file_ext == ".whl":
-            bits = file.rsplit("-", 4)
-            split = (bits[0], "-".join(bits[1:]))
-            to_safe_name = pkg_resources.safe_name
-        else:
-            match = re.search(r"(?P<pkg>.*?)-(?P<rest>\d+.*)", file)
-            if not match:
-                raise RuntimeError('[ERROR] Invalid package name, %s' & file)
-            split = (match.group("pkg"), match.group("rest"))
-            to_safe_name = pkg_resources.safe_name
+        match = RE_PACKAGE_NAME.search(file)
+        if not match:
+            raise RuntimeError('[ERROR] Invalid package name, %s' & file)
+        split = (match.group("pkg"), match.group("rest"))
+        to_safe_name = pkg_resources.safe_name
 
         if len(split) != 2 or not split[1]:
             raise RuntimeError('[ERROR] Invalid package name, %s' & file)
@@ -118,11 +109,9 @@ if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option('-d', '--directory', help='path to py-packages')
     parser.add_option('-p', '--packages', help='packages list')
-    parser.add_option('-l', '--pip-log-file', help='pip log file')
+    parser.add_option('-l', '--pip-log', help='pip log')
+    parser.add_option('-v', '--verbose', action="store_true", help='verbose mode')
     (opts, args) = parser.parse_args()
 
-    try:
-        mirror = PyPIMirror(opts.packages, opts.directory, opts.pip_log_file)
-        mirror.update()
-    except Exception, err:
-        logging.error(err)
+    mirror = PyPIMirror(opts.packages, opts.directory, opts.verbose, opts.pip_log)
+    mirror.update()

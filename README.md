@@ -12,8 +12,9 @@ Options:
                         path to py-packages
   -p PACKAGES, --packages=PACKAGES
                         packages list
-  -l PIP_LOG_FILE, --pip-log-file=PIP_LOG_FILE
-                        pip log file
+  -l PIP_LOG, --pip-log=PIP_LOG
+                        pip log
+  -v, --verbose         verbose mode
 ```
 
 ## How-to use
@@ -42,17 +43,13 @@ Step 1 : FROM alpine:latest
 Step 2 : RUN apk add --update python py-pip
  ---> Running in 534db45e2d3e
 ....
-Removing intermediate container 534db45e2d3e
-Step 3 : COPY pypi-mirror.py /bin/pypi-mirror.py
- ---> 3d9f9aa91213
-Removing intermediate container 7faadb48923b
 Successfully built 3d9f9aa91213
 $
 $ docker images 
-REPOSITORY                  TAG                 IMAGE ID            CREATED              SIZE
-ownport/pypi-mirror         dev                 8ade0ba9a7c4        About a minute ago   50.2 MB
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+ownport/pypi-mirror         dev                 fd4b31ee8b0d        28 minutes ago      51.92 MB
 $
-$ docker run -ti --rm --name pypi-mirror ownport/pypi-mirror:dev /bin/sh
+$ docker run -ti --rm --name pypi-mirror -v $(pwd)/pypi-mirror.py:/bin/pypi-mirror.py  ownport/pypi-mirror:dev /bin/sh
 $
 $ echo lxml > packages.req
 $
