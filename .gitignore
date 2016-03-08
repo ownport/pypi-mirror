@@ -63,3 +63,8 @@ target/
 
 # Temporary directories
 tmp/
+log/
+logs/
+
+# Temporary files
+*.req
