@@ -10,7 +10,7 @@ import sys
 import shutil
 import pkg_resources
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 RE_PACKAGE_NAME=re.compile(r"(?P<pkg>.*?)-(?P<rest>\d+.*)")
 
@@ -31,7 +31,7 @@ class PyPIMirror(object):
 
         self._verbose = verbose
         if not isinstance(verbose, bool):
-            self._verbose = False            
+            self._verbose = False
 
         self._packages = packages_list
         self._packages_dir = os.path.join(directory, 'packages/')
@@ -70,7 +70,7 @@ class PyPIMirror(object):
     def update_index(self):
 
         packages = [(f, self.pypi_package(f), os.path.join(self._packages_dir, f)) \
-                        for f in os.listdir(self._packages_dir) 
+                        for f in os.listdir(self._packages_dir)
                             if os.path.isfile(os.path.join(self._packages_dir, f)) and not f.startswith(".")]
 
         for _file, _package, path in packages:
@@ -80,13 +80,13 @@ class PyPIMirror(object):
                 os.mkdir(full_pkg_path)
 
             os.symlink(
-                os.path.join('../../packages/', _file), 
+                os.path.join('../../packages/', _file),
                 os.path.join(self._index_dir, _package, _file)
             )
 
 
     def pypi_package(self, file):
-        """ Returns the package name for a given file, or 
+        """ Returns the package name for a given file, or
             raises an RuntimeError exception if the file name is not valid
             """
 
@@ -107,12 +107,16 @@ if __name__ == '__main__':
 
     import optparse
 
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(version=__version__)
     parser.add_option('-d', '--directory', help='path to py-packages')
     parser.add_option('-p', '--packages', help='packages list')
     parser.add_option('-l', '--pip-log', help='pip log')
     parser.add_option('-v', '--verbose', action="store_true", help='verbose mode')
     (opts, args) = parser.parse_args()
+
+    if not opts.directory and not opts.packages:
+        parser.print_help()
+        sys.exit(1)
 
     mirror = PyPIMirror(opts.packages, opts.directory, opts.verbose, opts.pip_log)
     mirror.update()
