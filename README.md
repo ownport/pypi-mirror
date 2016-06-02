@@ -33,23 +33,27 @@ lxml
 scrapy
 ```
 
+**Notes:** If you have installed old version of pip, you can see the next error:
+```
+ERROR: unknown command "download"
+```
+in this case please upgrade you pip by command:
+```sh
+$ pip install --upgrade pip
+```
+
 ## How-to use with docker
 
+You can also use docker for downloading packages. Any python docker images with pre-installed pip will be suitable for this operation
+
+For example:
 ```sh
-$ docker build -t 'ownport/pypi-mirror:dev' .
-Sending build context to Docker daemon 9.911 MB
-Step 1 : FROM alpine:latest
- ---> 70c557e50ed6
-Step 2 : RUN apk add --update python py-pip
- ---> Running in 534db45e2d3e
-....
-Successfully built 3d9f9aa91213
-$
-$ docker images 
+$ docker pull ownport/python:2.7
+$ docker images
 REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
-ownport/pypi-mirror         dev                 fd4b31ee8b0d        28 minutes ago      51.92 MB
+ownport/python               2.7                 e94446ea1d13        3 weeks ago         50.74 MB
 $
-$ docker run -ti --rm --name pypi-mirror -v $(pwd)/pypi-mirror.py:/bin/pypi-mirror.py  ownport/pypi-mirror:dev /bin/sh
+$ docker run -ti --rm --name py27 -v $(pwd)/pypi-mirror.py:/bin/pypi-mirror.py  ownport/python:2.7 /bin/sh
 $
 $ echo lxml > packages.req
 $
@@ -69,5 +73,3 @@ $
 
 - [pip](https://pip.pypa.io/en/stable/)
 - [wolever/pip2pi](https://github.com/wolever/pip2pi) builds a PyPI-compatible package repository from pip requirements
-
-
