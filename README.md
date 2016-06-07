@@ -11,7 +11,7 @@ Options:
   -d DIRECTORY, --directory=DIRECTORY
                         path to py-packages
   -p PACKAGES, --packages=PACKAGES
-                        packages list
+                        packages list in JSON format
   -l PIP_LOG, --pip-log=PIP_LOG
                         pip log
   -v, --verbose         verbose mode
@@ -25,13 +25,16 @@ $ pypi-mirror.py --directory=<directory> --packages=<file-with-packages>
 
 After execution of this command in the directory will be created two sub-directories: packages/ and simple/. The packages/ directory will contain packages and simple/ directory will contain symlinks to packages for using with web server for local PyPI mirror.
 
-The file with packages is simple text file where each python package is represented by one line
+The file with packages is simple JSONLine file where each python package is represented by one JSON object
 
+```json
+{"name": "pip", "env": ["py2", "py3"]}
+{"name": "setuptools", "env": ["py2", "py3"]}
+{"name": "wheel", "env": ["py2", "py3"] }
+{"name": "scrapy==1.0.6", "env": ["py2"] }
+{"name": "scrapy==1.1.0", "env": ["py2", "py3"] }
 ```
-requests
-lxml
-scrapy
-```
+By `env` variable you can specify the environment: python2 or python3 or both.
 
 **Notes:** If you have installed old version of pip, you can see the next error:
 ```
@@ -48,12 +51,12 @@ You can also use docker for downloading packages. Any python docker images with 
 
 For example:
 ```sh
-$ docker pull ownport/python:2.7
+$ docker pull ownport/python-dev:2.7
 $ docker images
 REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
 ownport/python               2.7                 e94446ea1d13        3 weeks ago         50.74 MB
 $
-$ docker run -ti --rm --name py27 -v $(pwd)/pypi-mirror.py:/bin/pypi-mirror.py  ownport/python:2.7 /bin/sh
+$ docker run -ti --rm --name py27 -v $(pwd)/pypi-mirror.py:/bin/pypi-mirror.py  ownport/python-dev:2.7 /bin/sh
 $
 $ echo lxml > packages.req
 $

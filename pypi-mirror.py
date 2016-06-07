@@ -7,10 +7,11 @@ import os
 import re
 import pip
 import sys
+import json
 import shutil
 import pkg_resources
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 RE_PACKAGE_NAME=re.compile(r"(?P<pkg>.*?)-(?P<rest>\d+.*)")
 
@@ -44,6 +45,8 @@ class PyPIMirror(object):
             shutil.rmtree(self._index_dir)
         os.mkdir(self._index_dir)
 
+        self._py_version = "py%s" % sys.version_info[0]
+
 
     def update(self):
 
@@ -53,18 +56,26 @@ class PyPIMirror(object):
 
     def update_packages(self):
 
+        base_cmd = ['download',]
+        if not self._verbose:
+            base_cmd.append('-q')
+        base_cmd.extend(["--dest", self._packages_dir])
+        if self._pip_log:
+            base_cmd.extend(['--log', self._pip_log])
+
         with open(self._packages, 'r') as _packages:
-            for _package in _packages:
-                _package = _package.strip()
-                if _package:
-                    cmd = ['download',]
-                    if not self._verbose:
-                        cmd.append('-q')
-                    cmd.extend(["--dest", self._packages_dir])
-                    if self._pip_log:
-                        cmd.extend(['--log', self._pip_log])
-                    cmd.append(_package.strip())
+            for pkg in _packages:
+                print
+                try:
+                    _package = json.loads(pkg)
+                    if self._py_version not in _package.get("env", []):
+                        continue
+                    cmd = list()
+                    cmd.extend(base_cmd)
+                    cmd.append(_package["name"].strip())
                     pip.main(cmd)
+                except:
+                    pass
 
 
     def update_index(self):
@@ -72,6 +83,9 @@ class PyPIMirror(object):
         packages = [(f, self.pypi_package(f), os.path.join(self._packages_dir, f)) \
                         for f in os.listdir(self._packages_dir)
                             if os.path.isfile(os.path.join(self._packages_dir, f)) and not f.startswith(".")]
+
+        additional_packages = ([(f, pkg.replace(".", "-"), path) for f, pkg, path in packages if pkg.find('.') > 0])
+        packages.extend(additional_packages)
 
         for _file, _package, path in packages:
 
